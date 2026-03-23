@@ -1,0 +1,185 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+typedef struct No {
+int vertice;
+struct No* prox;
+} No;
+typedef struct {
+int numVertices;
+No** listaAdj;
+} Grafo;
+/* ---------- CRIAÇÃO DO GRAFO ---------- */
+No* criarNo(int v) {
+No* novo = (No*) malloc(sizeof(No));
+novo->vertice = v;
+novo->prox = NULL;
+return novo;
+}
+Grafo* criarGrafo(int vertices) {
+Grafo* g = (Grafo*) malloc(sizeof(Grafo));
+g->numVertices = vertices;
+g->listaAdj = (No**) malloc((vertices + 1) * sizeof(No*));
+for (int i = 1; i <= vertices; i++)
+g->listaAdj[i] = NULL;
+return g;
+}
+/* ---------- VALIDAÇÃO DE ENTRADA ---------- */
+// verifica se string contém apenas dígitos
+int somenteDigitos(char *str) {
+for (int i = 0; str[i] != '\0'; i++) {
+if (!isdigit(str[i]))
+return 0;
+}
+return 1;
+}
+// Lê um único número inteiro positivo
+int lerUmNumero(int *valor) {
+char linha[100];
+if (fgets(linha, sizeof(linha), stdin) == NULL)
+return 0;
+linha[strcspn(linha, "\n")] = '\0';
+if (!somenteDigitos(linha)) {
+printf("\nErro! Digite apenas um numero inteiro positivo.\n");
+printf("Exemplo correto: 4\n\n");
+return 0;
+}
+*valor = atoi(linha);
+return 1;
+}
+// Lê dois números separados por espaço
+int lerDoisNumeros(int *a, int *b) {
+char linha[100];
+if (fgets(linha, sizeof(linha), stdin) == NULL)
+return 0;
+linha[strcspn(linha, "\n")] = '\0';
+char *token1 = strtok(linha, " ");
+char *token2 = strtok(NULL, " ");
+char *extra = strtok(NULL, " ");
+if (token1 == NULL || token2 == NULL || extra != NULL ||
+!somenteDigitos(token1) || !somenteDigitos(token2)) {
+printf("\nErro! Digite exatamente dois numeros separados por espaco.\n");
+printf("Exemplo correto: 1 2\n\n");
+return 0;
+}
+*a = atoi(token1);
+*b = atoi(token2);
+return 1;
+}
+/* ---------- GRAFO ---------- */
+void adicionarAresta(Grafo* g, int origem, int destino) {
+No* novo = criarNo(destino);
+novo->prox = g->listaAdj[origem];
+g->listaAdj[origem] = novo;
+novo = criarNo(origem);
+novo->prox = g->listaAdj[destino];
+g->listaAdj[destino] = novo;
+}
+/* ---------- BFS ---------- */
+void bfs(Grafo* g, int origem, int destino) {
+int* visitado = (int*) calloc(g->numVertices + 1, sizeof(int));
+int* fila = (int*) malloc((g->numVertices + 1) * sizeof(int));
+int* pai = (int*) malloc((g->numVertices + 1) * sizeof(int));
+int inicio = 0, fim = 0;
+for (int i = 1; i <= g->numVertices; i++)
+pai[i] = -1;
+visitado[origem] = 1;
+fila[fim++] = origem;
+while (inicio < fim) {
+int atual = fila[inicio++];
+if (atual == destino)
+break;
+No* temp = g->listaAdj[atual];
+while (temp != NULL) {
+int adj = temp->vertice;
+if (!visitado[adj]) {
+visitado[adj] = 1;
+pai[adj] = atual;
+fila[fim++] = adj;
+}
+temp = temp->prox;
+}
+}
+if (!visitado[destino]) {
+printf("\nNao existe caminho entre %d e %d\n", origem, destino);
+} else {
+printf("\nCaminho encontrado: ");
+int caminho[g->numVertices + 1];
+int contador = 0;
+int atual = destino;
+while (atual != -1) {
+caminho[contador++] = atual;
+atual = pai[atual];
+}
+for (int i = contador - 1; i >= 0; i--)
+printf("%d ", caminho[i]);
+printf("\n");
+}
+free(visitado);
+free(fila);
+free(pai);
+}
+/* ---------- LIBERAR MEMÓRIA ---------- */
+void liberarGrafo(Grafo* g) {
+for (int i = 1; i <= g->numVertices; i++) {
+No* temp = g->listaAdj[i];
+while (temp != NULL) {
+No* aux = temp;
+temp = temp->prox;
+free(aux);
+}
+}
+free(g->listaAdj);
+free(g);
+}
+/* ---------- MAIN ---------- */
+int main() {
+int vertices, arestas;
+printf("Quantidade de vertices: ");
+scanf("%d", &vertices);
+getchar();
+Grafo* g = criarGrafo(vertices);
+printf("Quantidade de arestas: ");
+scanf("%d", &arestas);
+getchar();
+printf("\nDigite as arestas no formato: numero espaco numero\n");
+printf("Exemplo: 1 2\n\n");
+for (int i = 0; i < arestas; i++) {
+int origem, destino;
+while (1) {
+printf("Aresta %d: ", i + 1);
+if (lerDoisNumeros(&origem, &destino)) {
+if (origem < 1 || origem > vertices ||
+destino < 1 || destino > vertices) {
+printf("\nVertice fora do intervalo permitido (1 ate %d)\n\n", vertices);
+} else {
+adicionarAresta(g, origem, destino);
+break;
+}
+}
+}
+}
+int origem, destino;
+while (1) {
+printf("\nVertice de origem: ");
+if (lerUmNumero(&origem)) {
+if (origem < 1 || origem > vertices)
+printf("Vertice deve estar entre 1 e %d\n\n", vertices);
+else
+break;
+}
+}
+while (1) {
+printf("\nVertice de destino: ");
+if (lerUmNumero(&destino)) {
+if (destino < 1 || destino > vertices)
+printf("Vertice deve estar entre 1 e %d\n\n", vertices);
+else
+break;
+}
+}
+bfs(g, origem, destino);
+liberarGrafo(g);
+return 0;
+}
