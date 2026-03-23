@@ -1,0 +1,2 @@
+algoritmo criado para resolver o seguinte problema Criar um algoritmo em linguagem C que utilize alocação de memória dinâmica e que procure um caminho entre um vértice de origem e um vértice de destino, O usuário entra com Representação do grafo Quantidade de vértices Ligações entre os vértices
+Insere os vértices de origem e destino. Portanto pode ser escolhido qualquer um dos vértices pertencentes ao grafo
